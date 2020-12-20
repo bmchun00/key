@@ -29,7 +29,7 @@ class MyApp(QWidget):
 
         self.setLayout(vbox)
 
-        self.setWindowTitle('alpha')
+        self.setWindowTitle('key(가제) 1.00a')
         self.setGeometry(300, 300, 500, 300)
         self.show()
 
