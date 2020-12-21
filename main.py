@@ -2,19 +2,39 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
+import time
 import os, glob
 
 def getInternal():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     flist = glob.glob(BASE_DIR+'\internal\*.txt')
+    todo = []
     for i in flist:
         tf = open(i,"rt",encoding='UTF-8')
         txtlist = tf.readlines()
         for j in range(0,len(txtlist)):
-            txtlist[j] = txtlist[j].replace("\n", "")
+            todo.append(txtlist[j].replace("\n", ""))
 
-    return txtlist
+    return todo
 
+def getWrong(user, cor):
+    cnt = 0
+    lc = len(cor)
+    if user == cor:
+        return 100
+    else:
+        user = list(user)
+        cor = list(cor)
+        print(len(cor))
+        while cor:
+            c = cor.pop(0)
+            if user:
+                u = user.pop(0)
+                if c!=u:
+                    cnt+=1
+            else:
+                cnt+=1
+        return (lc-cnt)/lc * 100
 
 class communicate(QObject):
     getnum = pyqtSignal()
@@ -67,15 +87,30 @@ class MyApp(QWidget):
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Return and self.text.get.text() != '':
-            self.text.userList.append(self.text.get.text())
-            self.text.get.setText('')
-            val = self.text.pbar.value()
-            self.text.pbar.setValue(val+1)
-            self.text.progressNum += 1
-            self.text.title.setText(self.text.toList[self.text.progressNum])
-            if self.text.progressNum == self.text.maxNum:
-                print(self.text.userList)
-
+            if self.text.progressNum == 0: #유예
+                self.text.prevtime = time.time()
+                self.text.title.setText(self.text.toList[self.text.progressNum])
+                self.text.progressNum += 1
+                self.text.get.setText('')
+            else:
+                user = self.text.get.text()
+                cor = self.text.toList[self.text.progressNum-1]
+                duringtime = time.time() - self.text.prevtime
+                self.text.prevtime = time.time()
+                print(duringtime)
+                self.text.userList.append(user)
+                self.text.get.setText('')
+                val = self.text.pbar.value()
+                self.text.title.setText(self.text.toList[self.text.progressNum])
+                self.text.pbar.setValue(val + 1)
+                self.text.progressNum += 1
+                wrong = getWrong(user,cor)
+                self.text.wrongList.append(wrong)
+                self.text.wrong.setText("정확도 : "+str(wrong))
+                print(getWrong(user,cor))
+                if self.text.progressNum == self.text.maxNum + 1:
+                    print(self.text.userList)
+                    print(self.text.toList[0:self.text.maxNum])
 
 
 class MainTap(QWidget):
@@ -111,12 +146,16 @@ class TextTap(QWidget):
     def initUI(self):
         self.title = QLabel("아무거나 입력해 시작합니다.", self)
         self.title.setAlignment(Qt.AlignCenter)
+        self.tasu = QLabel("분당 타수 : ", self)
+        self.wrong = QLabel("정확도 : ", self)
         self.get = QLineEdit(self)
         self.get.setAlignment(Qt.AlignCenter)
         self.pbar = QProgressBar(self)
         self.pbar.setAlignment(Qt.AlignVCenter)
         self.vbox = QVBoxLayout(self)
         self.vbox.addWidget(self.title)
+        self.vbox.addWidget(self.tasu)
+        self.vbox.addWidget(self.wrong)
         self.vbox.addWidget(self.get)
         self.vbox.addWidget(self.pbar)
         self.setLayout(self.vbox)
@@ -125,6 +164,8 @@ class TextTap(QWidget):
     progressNum = 0
     maxNum = 0
     userList = []
+    prevtime = 0
+    wrongList = []
 
 
 if __name__ == '__main__':
