@@ -46,13 +46,19 @@ class MyApp(QWidget):
             if ok:
                 self.text.pbar.setMaximum(num)
                 self.text.pbar.setValue(0)
+                self.text.progressNum = 0
+                self.text.maxNum = num
             else:
                 self.tabs.setCurrentIndex(0)
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Return:
+        if e.key() == Qt.Key_Return and self.text.get.text() != '':
+            self.text.get.setText('')
             val = self.text.pbar.value()
             self.text.pbar.setValue(val+1)
+            self.text.progressNum += 1
+            if self.text.progressNum == self.text.maxNum:
+                print('fin')
 
 
 
@@ -87,7 +93,7 @@ class TextTap(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.title = QLabel("기본 텍스트 입니다.", self)
+        self.title = QLabel("아무거나 입력해 시작합니다.", self)
         self.title.setAlignment(Qt.AlignCenter)
         self.get = QLineEdit(self)
         self.get.setAlignment(Qt.AlignCenter)
@@ -98,6 +104,8 @@ class TextTap(QWidget):
         self.vbox.addWidget(self.get)
         self.vbox.addWidget(self.pbar)
         self.setLayout(self.vbox)
+    progressNum = 0
+    maxNum = 0
 
 
 if __name__ == '__main__':
