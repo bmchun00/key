@@ -16,6 +16,17 @@ def getInternal():
             todo.append(txtlist[j].replace("\n", ""))
 
     return todo
+def getAt(cor, time, wrong):
+    cnt = 0
+    cl = list(cor)
+    while cl:
+        tmp = cl.pop(0)
+        if '가'<=tmp<='힣':
+            cnt+=2.3
+        else:
+            cnt+=1
+    return cnt/time*60*wrong/100
+
 
 def getWrong(user, cor):
     cnt = 0
@@ -35,9 +46,6 @@ def getWrong(user, cor):
             else:
                 cnt+=1
         return (lc-cnt)/lc * 100
-
-class communicate(QObject):
-    getnum = pyqtSignal()
 
 class MyApp(QWidget):
 
@@ -78,6 +86,7 @@ class MyApp(QWidget):
         if changedInd == 1 or changedInd == 2:
             num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.')
             if ok:
+                self.text.initALL()
                 self.text.pbar.setMaximum(num)
                 self.text.pbar.setValue(0)
                 self.text.progressNum = 0
@@ -97,7 +106,6 @@ class MyApp(QWidget):
                 cor = self.text.toList[self.text.progressNum-1]
                 duringtime = time.time() - self.text.prevtime
                 self.text.prevtime = time.time()
-                print(duringtime)
                 self.text.userList.append(user)
                 self.text.get.setText('')
                 val = self.text.pbar.value()
@@ -106,11 +114,16 @@ class MyApp(QWidget):
                 self.text.progressNum += 1
                 wrong = getWrong(user,cor)
                 self.text.wrongList.append(wrong)
-                self.text.wrong.setText("정확도 : "+str(wrong))
-                print(getWrong(user,cor))
+                self.text.wrong.setText("정확도 : "+str(int(wrong)))
+                at = getAt(cor,duringtime,wrong)
+                self.text.atList.append(at)
+                self.text.tasu.setText("분당 타수 : "+str(int(at)))
                 if self.text.progressNum == self.text.maxNum + 1:
-                    print(self.text.userList)
-                    print(self.text.toList[0:self.text.maxNum])
+                    res = QMessageBox()
+                    res.setWindowTitle("결과")
+                    res.setText("평균 분당 타수 : "+str(int(sum(self.text.atList)/len(self.text.atList)))+"\n평균 정확도 : "+str(int(sum(self.text.wrongList)/len(self.text.wrongList))))
+                    res.exec()
+                    self.tabs.setCurrentIndex(0)
 
 
 class MainTap(QWidget):
@@ -146,8 +159,8 @@ class TextTap(QWidget):
     def initUI(self):
         self.title = QLabel("아무거나 입력해 시작합니다.", self)
         self.title.setAlignment(Qt.AlignCenter)
-        self.tasu = QLabel("분당 타수 : ", self)
-        self.wrong = QLabel("정확도 : ", self)
+        self.tasu = QLabel("", self)
+        self.wrong = QLabel("", self)
         self.get = QLineEdit(self)
         self.get.setAlignment(Qt.AlignCenter)
         self.pbar = QProgressBar(self)
@@ -160,12 +173,26 @@ class TextTap(QWidget):
         self.vbox.addWidget(self.pbar)
         self.setLayout(self.vbox)
 
+    def initALL(self):
+        self.toList = getInternal()
+        self.progressNum = 0
+        self.maxNum = 0
+        self.userList = []
+        self.prevtime = 0
+        self.wrongList = []
+        self.atList = []
+        self.tasu.setText("")
+        self.wrong.setText("")
+        self.title.setText("아무거나 입력해 시작합니다.")
+
     toList = getInternal()
     progressNum = 0
     maxNum = 0
     userList = []
     prevtime = 0
     wrongList = []
+    atList = []
+
 
 
 if __name__ == '__main__':
