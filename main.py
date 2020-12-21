@@ -7,7 +7,7 @@ import os, glob
 
 def getInternal():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    flist = glob.glob(BASE_DIR+'\internal\*.txt')
+    flist = glob.glob(BASE_DIR+'\internal\*.bmc')
     todo = []
     for i in flist:
         tf = open(i,"rt",encoding='UTF-8')
