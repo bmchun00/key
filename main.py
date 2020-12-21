@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 import time
 import os, glob
 
+
 def getInternal():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     flist = glob.glob(BASE_DIR+'\internal\*.bmc')
@@ -22,7 +23,7 @@ def getAt(cor, time, wrong):
     while cl:
         tmp = cl.pop(0)
         if '가'<=tmp<='힣':
-            cnt+=2.3
+            cnt+=2.6
         else:
             cnt+=1
     return cnt/time*60*wrong/100
@@ -54,12 +55,12 @@ class MyApp(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.center()
         self.main = MainTap()
         self.text = TextTap()
         self.news = QWidget()
         self.stat = QWidget()
         self.changelog = QWidget()
-
         self.tabs = QTabWidget()
         self.tabs.addTab(self.main, 'Main')
         self.tabs.addTab(self.text, 'Internal Text')
@@ -78,13 +79,13 @@ class MyApp(QWidget):
         self.setLayout(self.vbox)
 
         self.setWindowTitle('key(가제) 1.01a')
-        self.setGeometry(300, 300, 500, 300)
+        self.setFixedSize(500,300)
         self.show()
 
     def tcEvent(self):
         changedInd = self.tabs.currentIndex()
         if changedInd == 1 or changedInd == 2:
-            num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.')
+            num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.',1,1,30) #max 미정
             if ok:
                 self.text.initALL()
                 self.text.pbar.setMaximum(num)
@@ -114,16 +115,22 @@ class MyApp(QWidget):
                 self.text.progressNum += 1
                 wrong = getWrong(user,cor)
                 self.text.wrongList.append(wrong)
-                self.text.wrong.setText("정확도 : "+str(int(wrong)))
+                self.text.wrong.setText("정확도 : "+str(int(wrong))+"%")
                 at = getAt(cor,duringtime,wrong)
                 self.text.atList.append(at)
                 self.text.tasu.setText("분당 타수 : "+str(int(at)))
                 if self.text.progressNum == self.text.maxNum + 1:
                     res = QMessageBox()
                     res.setWindowTitle("결과")
-                    res.setText("평균 분당 타수 : "+str(int(sum(self.text.atList)/len(self.text.atList)))+"\n평균 정확도 : "+str(int(sum(self.text.wrongList)/len(self.text.wrongList))))
+                    res.setText("평균 분당 타수 : "+str(int(sum(self.text.atList)/len(self.text.atList)))+"\n평균 정확도 : "+str(int(sum(self.text.wrongList)/len(self.text.wrongList)))+"%")
                     res.exec()
                     self.tabs.setCurrentIndex(0)
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
 
 class MainTap(QWidget):
@@ -131,24 +138,24 @@ class MainTap(QWidget):
         super().__init__()
         self.initUI()
     def initUI(self):
-        title = QLabel("반갑습니다.", self)
-        title.setAlignment(Qt.AlignCenter)
-        tfont = title.font()
-        tfont.setFamily('맑은 고딕')
-        tfont.setPointSize(20)
-        title.setFont(tfont)
+        self.title = QLabel("key(가제) 1.01a", self)
+        self.title.setAlignment(Qt.AlignCenter)
+        self.tfont = self.title.font()
+        self.tfont.setFamily('맑은 고딕')
+        self.tfont.setPointSize(20)
+        self.title.setFont(self.tfont)
 
-        sub = QLabel("이 내용은 테스트입니다.이 내용은 테스트입니다.이 내용은 테스트입니다.\n이 내용은 테스트입니다.이 내용은 테스트입니다.",self)
-        sfont = sub.font()
-        sub.setAlignment(Qt.AlignVCenter)
-        sfont.setFamily('맑은 고딕')
-        sub.setFont(sfont)
+        self.sub = QLabel("이 내용은 테스트입니다.이 내용은 테스트입니다.이 내용은 테스트입니다.\n이 내용은 테스트입니다.이 내용은 테스트입니다.",self)
+        self.sfont = self.sub.font()
+        self.sub.setAlignment(Qt.AlignCenter)
+        self.sfont.setFamily('맑은 고딕')
+        self.sub.setFont(self.sfont)
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(title)
-        vbox.addWidget(sub)
+        self.vbox = QVBoxLayout()
+        self.vbox.addWidget(self.title)
+        self.vbox.addWidget(self.sub)
 
-        self.setLayout(vbox)
+        self.setLayout(self.vbox)
 
 
 class TextTap(QWidget):
@@ -162,15 +169,20 @@ class TextTap(QWidget):
         self.tasu = QLabel("", self)
         self.wrong = QLabel("", self)
         self.get = QLineEdit(self)
-        self.get.setAlignment(Qt.AlignCenter)
         self.pbar = QProgressBar(self)
-        self.pbar.setAlignment(Qt.AlignVCenter)
+        self.pbar.setAlignment(Qt.AlignCenter)
+        self.pbar.setTextVisible(False)
+        self.pbar.setFixedSize(300,10)
         self.vbox = QVBoxLayout(self)
+        self.hbox = QHBoxLayout(self)
+        self.hbox.addWidget(self.pbar)
+        self.vbox.addStretch(1)
         self.vbox.addWidget(self.title)
+        self.vbox.addStretch(1)
         self.vbox.addWidget(self.tasu)
         self.vbox.addWidget(self.wrong)
         self.vbox.addWidget(self.get)
-        self.vbox.addWidget(self.pbar)
+        self.vbox.addLayout(self.hbox)
         self.setLayout(self.vbox)
 
     def initALL(self):
