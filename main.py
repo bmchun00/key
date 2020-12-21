@@ -4,9 +4,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
 import time
 import os, glob
+import requests
+from bs4 import BeautifulSoup
 
-
-def getInternal():
+def getInternal(): #개선 필요
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     flist = glob.glob(BASE_DIR+'\internal\*.bmc')
     todo = []
@@ -15,15 +16,28 @@ def getInternal():
         txtlist = tf.readlines()
         for j in range(0,len(txtlist)):
             todo.append(txtlist[j].replace("\n", ""))
-
     return todo
+
+def getNews():
+    headers = {"User-Agent": "Mozilla/5.0"}
+    url = 'https://news.naver.com/main/read.nhn?mode=LSD&mid=shm&sid1=105&oid=001&aid=0011343153'
+    response = requests.get(url,headers=headers)
+    soup = BeautifulSoup(response.content,"html.parser")
+    cont = soup.select("._article_body_contents")[0].get_text()
+    cont = cont.replace("\n","")
+    cont = cont.replace("\t", "")
+    cont = cont.replace("\'", "")
+    cont = cont.replace("    ", "\n")
+    output = cont.split("\n")
+    return output[0:len(output)-1]
+
 def getAt(cor, time, wrong):
     cnt = 0
     cl = list(cor)
     while cl:
         tmp = cl.pop(0)
         if '가'<=tmp<='힣':
-            cnt+=2.6
+            cnt+=2.6 #수정 필요(불확실성)
         else:
             cnt+=1
     return cnt/time*60*wrong/100
@@ -78,7 +92,7 @@ class MyApp(QWidget):
 
         self.setLayout(self.vbox)
 
-        self.setWindowTitle('key(가제) 1.01a')
+        self.setWindowTitle('key(가제) 1.04a')
         self.setFixedSize(500,300)
         self.show()
 
@@ -102,6 +116,7 @@ class MyApp(QWidget):
                 self.text.title.setText(self.text.toList[self.text.progressNum])
                 self.text.progressNum += 1
                 self.text.get.setText('')
+                self.text.title.setAlignment(Qt.AlignCenter)
             else:
                 user = self.text.get.text()
                 cor = self.text.toList[self.text.progressNum-1]
@@ -119,6 +134,7 @@ class MyApp(QWidget):
                 at = getAt(cor,duringtime,wrong)
                 self.text.atList.append(at)
                 self.text.tasu.setText("분당 타수 : "+str(int(at)))
+                self.text.title.setAlignment(Qt.AlignCenter)
                 if self.text.progressNum == self.text.maxNum + 1:
                     res = QMessageBox()
                     res.setWindowTitle("결과")
@@ -138,7 +154,7 @@ class MainTap(QWidget):
         super().__init__()
         self.initUI()
     def initUI(self):
-        self.title = QLabel("key(가제) 1.01a", self)
+        self.title = QLabel("key(가제) 1.04a", self)
         self.title.setAlignment(Qt.AlignCenter)
         self.tfont = self.title.font()
         self.tfont.setFamily('맑은 고딕')
@@ -164,7 +180,7 @@ class TextTap(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.title = QLabel("아무거나 입력해 시작합니다.", self)
+        self.title = QTextBrowser(self)
         self.title.setAlignment(Qt.AlignCenter)
         self.tasu = QLabel("", self)
         self.wrong = QLabel("", self)
@@ -178,7 +194,7 @@ class TextTap(QWidget):
         self.hbox.addWidget(self.pbar)
         self.vbox.addStretch(1)
         self.vbox.addWidget(self.title)
-        self.vbox.addStretch(1)
+        self.vbox.addStretch(2)
         self.vbox.addWidget(self.tasu)
         self.vbox.addWidget(self.wrong)
         self.vbox.addWidget(self.get)
@@ -186,7 +202,7 @@ class TextTap(QWidget):
         self.setLayout(self.vbox)
 
     def initALL(self):
-        self.toList = getInternal()
+        self.toList = getNews()
         self.progressNum = 0
         self.maxNum = 0
         self.userList = []
@@ -196,15 +212,15 @@ class TextTap(QWidget):
         self.tasu.setText("")
         self.wrong.setText("")
         self.title.setText("아무거나 입력해 시작합니다.")
+        self.title.setAlignment(Qt.AlignCenter)
 
-    toList = getInternal()
+    toList = getNews()
     progressNum = 0
     maxNum = 0
     userList = []
     prevtime = 0
     wrongList = []
     atList = []
-
 
 
 if __name__ == '__main__':
