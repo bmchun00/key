@@ -2,8 +2,20 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtCore import Qt
+import os, glob
 
-typenum = 0
+def getInternal():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    flist = glob.glob(BASE_DIR+'\internal\*.txt')
+    for i in flist:
+        tf = open(i,"rt",encoding='UTF-8')
+        txtlist = tf.readlines()
+        for j in range(0,len(txtlist)):
+            txtlist[j] = txtlist[j].replace("\n", "")
+
+    return txtlist
+
+
 class communicate(QObject):
     getnum = pyqtSignal()
 
@@ -26,12 +38,14 @@ class MyApp(QWidget):
         self.tabs.addTab(self.news, 'News')
         self.tabs.addTab(self.stat, 'Stat')
         self.tabs.addTab(self.changelog, 'ChangeLog')
+        tabfont = self.tabs.font()
+        tabfont.setFamily('맑은 고딕')
+        self.tabs.setFont(tabfont)
 
         self.vbox = QVBoxLayout()
         self.vbox.addWidget(self.tabs)
 
         self.tabs.currentChanged.connect(self.tcEvent)
-        print(self.tabs.currentIndex())
 
         self.setLayout(self.vbox)
 
@@ -53,12 +67,14 @@ class MyApp(QWidget):
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Return and self.text.get.text() != '':
+            self.text.userList.append(self.text.get.text())
             self.text.get.setText('')
             val = self.text.pbar.value()
             self.text.pbar.setValue(val+1)
             self.text.progressNum += 1
+            self.text.title.setText(self.text.toList[self.text.progressNum])
             if self.text.progressNum == self.text.maxNum:
-                print('fin')
+                print(self.text.userList)
 
 
 
@@ -70,15 +86,15 @@ class MainTap(QWidget):
         title = QLabel("반갑습니다.", self)
         title.setAlignment(Qt.AlignCenter)
         tfont = title.font()
-        #tfont.setFamily('맑은 고딕')
+        tfont.setFamily('맑은 고딕')
         tfont.setPointSize(20)
         title.setFont(tfont)
-
-
 
         sub = QLabel("이 내용은 테스트입니다.이 내용은 테스트입니다.이 내용은 테스트입니다.\n이 내용은 테스트입니다.이 내용은 테스트입니다.",self)
         sfont = sub.font()
         sub.setAlignment(Qt.AlignVCenter)
+        sfont.setFamily('맑은 고딕')
+        sub.setFont(sfont)
 
         vbox = QVBoxLayout()
         vbox.addWidget(title)
@@ -104,13 +120,14 @@ class TextTap(QWidget):
         self.vbox.addWidget(self.get)
         self.vbox.addWidget(self.pbar)
         self.setLayout(self.vbox)
+
+    toList = getInternal()
     progressNum = 0
     maxNum = 0
+    userList = []
 
 
 if __name__ == '__main__':
-    typenum = 0
     app = QApplication(sys.argv)
     ex = MyApp()
-    print(typenum)
     sys.exit(app.exec_())
