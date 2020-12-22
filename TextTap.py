@@ -47,6 +47,7 @@ class TextTap(QWidget):
         self.wrong.setText("")
         self.title.setText("아무거나 입력해 시작합니다.")
         self.title.setAlignment(Qt.AlignCenter)
+        self.get.setAlignment(Qt.AlignCenter)
 
     toList = []
     progressNum = 0

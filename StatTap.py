@@ -2,10 +2,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import os,glob
-import time
 
 def getDatas():
     dates=[]
@@ -31,12 +29,9 @@ class StatTab(QWidget):
         super().__init__()
         font = {'size':6}
         matplotlib.rc('font',**font)
-        self.l = QLabel("",self)
-        self.initUI()
+        self.constUI()
 
     def initUI(self):
-        self.corfig = plt.Figure()
-        self.avgfig = plt.Figure()
         dates, avgs, cors = getDatas()
         self.setLayout(self.grid)
         self.avgsplot = self.avgfig.add_subplot(111)
@@ -62,19 +57,24 @@ class StatTab(QWidget):
         self.l.setAlignment(Qt.AlignTop)
         self.l.setAlignment(Qt.AlignVCenter)
         self.l.setFixedWidth(200)
+        self.avgcan.show()
+
+    def constUI(self):
+        self.l = QLabel('',self)
         self.rbutton = QPushButton("기록 삭제",self)
         self.rbutton.setToolTip('현재까지의 모든 기록을 삭제합니다.')
         self.rbutton.clicked.connect(self.onClick)
         self.grid.addWidget(self.rbutton,1,1)
         self.grid.addWidget(self.l,0,1)
-        self.avgcan.show()
 
     grid = QGridLayout()
+    corfig = plt.Figure()
+    avgfig = plt.Figure()
 
     def refresh(self):
         self.l.setText('')
-        self.corfig = plt.Figure()
-        self.avgfig = plt.Figure()
+        self.corfig.clf()
+        self.avgfig.clf()
 
     def onClick(self):
         reply = QMessageBox.question(self, '기록 삭제', '정말로 삭제하시겠습니까?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -83,5 +83,8 @@ class StatTab(QWidget):
                 os.remove(self.BASE_DIR + '\\record\stat.bstat')
             except:
                 print("두번삭제에러")
+            self.refresh()
+            self.initUI()
+
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

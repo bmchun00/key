@@ -115,12 +115,13 @@ class MyApp(QWidget):
             tab = self.news
         if changedInd == 3:
             tab = self.lyr
-        if e.key() == Qt.Key_Return and tab.get.text() != '':
+        if changedInd in [1,2,3] and e.key() == Qt.Key_Return and tab.get.text() != '':
             if tab.progressNum == 0: #유예
                 tab.prevtime = time.time()
                 tab.title.setText(tab.toList[tab.progressNum])
                 tab.progressNum += 1
                 tab.get.setText('')
+                tab.get.setAlignment(Qt.AlignCenter)
                 tab.title.setAlignment(Qt.AlignCenter)
             else:
                 user = tab.get.text()
@@ -129,6 +130,7 @@ class MyApp(QWidget):
                 tab.prevtime = time.time()
                 tab.userList.append(user)
                 tab.get.setText('')
+                tab.get.setAlignment(Qt.AlignCenter)
                 val = tab.pbar.value()
                 tab.pbar.setValue(val + 1)
                 tab.progressNum += 1
