@@ -5,6 +5,16 @@ import time
 from MainTap import MainTap
 from TextTap import TextTap
 from StatTap import StatTab
+import os, glob
+
+def writeTxt(at, wrong):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    flist = glob.glob(BASE_DIR + '\\record\stat.bstat')
+    if not flist:
+        tf = open(BASE_DIR+'\\record\stat.bstat',"w", encoding='UTF-8')
+    else:
+        tf = open(BASE_DIR+'\\record\stat.bstat',"a", encoding='UTF-8')
+    tf.write(str(time.strftime('%Y%m%d%H%M',time.localtime(time.time())))+" "+str(at)+" "+str(wrong)+"\n")
 
 def getAt(cor, time, wrong):
     cnt = 0
@@ -69,7 +79,7 @@ class MyApp(QWidget):
         self.setLayout(self.vbox)
 
         self.setWindowTitle('key(가제) 1.10a')
-        self.setFixedSize(500,300)
+        self.setFixedSize(500,350)
         self.show()
 
     def tcEvent(self):
@@ -93,6 +103,9 @@ class MyApp(QWidget):
                 tab.maxNum = num
             else:
                 self.tabs.setCurrentIndex(0)
+        if changedInd == 4:
+            self.stat.refresh()
+            self.stat.initUI()
 
     def keyPressEvent(self, e):
         changedInd = self.tabs.currentIndex()
@@ -127,13 +140,17 @@ class MyApp(QWidget):
                 tab.tasu.setText("분당 타수 : "+str(int(at)))
                 tab.title.setAlignment(Qt.AlignCenter)
                 if tab.progressNum == tab.maxNum + 1:
+                    cb = QCheckBox("결과를 기록할래요")
                     tab.title.setText('')
                     tab.title.setAlignment(Qt.AlignCenter)
                     res = QMessageBox()
                     res.setWindowTitle("결과")
                     res.setText("평균 분당 타수 : "+str(int(sum(tab.atList)/len(tab.atList)))+"\n평균 정확도 : "+str(int(sum(tab.wrongList)/len(tab.wrongList)))+"%")
+                    res.setCheckBox(cb)
                     res.exec()
                     self.tabs.setCurrentIndex(0)
+                    if cb.checkState():
+                        writeTxt(int(sum(tab.atList)/len(tab.atList)), int(sum(tab.wrongList)/len(tab.wrongList)))
                 else:
                     tab.title.setText(tab.toList[tab.progressNum-1])
                     tab.title.setAlignment(Qt.AlignCenter)
