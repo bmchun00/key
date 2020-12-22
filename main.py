@@ -146,13 +146,15 @@ class MyApp(QWidget):
                 tab.title.setAlignment(Qt.AlignCenter)
                 if tab.progressNum == tab.maxNum + 1:
                     tab.title.setText('')
+                    tab.title.setAlignment(Qt.AlignCenter)
                     res = QMessageBox()
                     res.setWindowTitle("결과")
                     res.setText("평균 분당 타수 : "+str(int(sum(tab.atList)/len(tab.atList)))+"\n평균 정확도 : "+str(int(sum(tab.wrongList)/len(tab.wrongList)))+"%")
                     res.exec()
                     self.tabs.setCurrentIndex(0)
                 else:
-                    tab.title.setText(tab.toList[tab.progressNum])
+                    tab.title.setText(tab.toList[tab.progressNum-1])
+                    tab.title.setAlignment(Qt.AlignCenter)
 
     def center(self):
         qr = self.frameGeometry()
@@ -172,7 +174,7 @@ class MainTap(QWidget):
         self.tfont.setPointSize(20)
         self.title.setFont(self.tfont)
 
-        self.sub = QLabel("이 내용은 테스트입니다.이 내용은 테스트입니다.이 내용은 테스트입니다.\n이 내용은 테스트입니다.이 내용은 테스트입니다.",self)
+        self.sub = QLabel("Internal Text에서 내부 텍스트를 불러올 수 있습니다.\nNews에서 뉴스를 불러올 수 있습니다.\n다만 뉴스의 경우 문자열 길이에 대한 처리가 아직 필요합니다.",self)
         self.sfont = self.sub.font()
         self.sub.setAlignment(Qt.AlignCenter)
         self.sfont.setFamily('맑은 고딕')
