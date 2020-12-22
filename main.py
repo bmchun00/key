@@ -72,7 +72,7 @@ class MyApp(QWidget):
         self.center()
         self.main = MainTap()
         self.text = TextTap()
-        self.news = QWidget()
+        self.news = TextTap()
         self.stat = QWidget()
         self.changelog = QWidget()
         self.tabs = QTabWidget()
@@ -92,55 +92,67 @@ class MyApp(QWidget):
 
         self.setLayout(self.vbox)
 
-        self.setWindowTitle('key(가제) 1.04a')
+        self.setWindowTitle('key(가제) 1.05a')
         self.setFixedSize(500,300)
         self.show()
 
     def tcEvent(self):
         changedInd = self.tabs.currentIndex()
+        if changedInd == 1:
+            tab = self.text
+            tab.initALL('internal')
+        if changedInd == 2:
+            tab = self.news
+            tab.initALL('news')
         if changedInd == 1 or changedInd == 2:
-            num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.',1,1,30) #max 미정
+            num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.', 1, 1, len(tab.toList)-1)
             if ok:
-                self.text.initALL()
-                self.text.pbar.setMaximum(num)
-                self.text.pbar.setValue(0)
-                self.text.progressNum = 0
-                self.text.maxNum = num
+                tab.pbar.setMaximum(num)
+                tab.pbar.setValue(0)
+                tab.progressNum = 0
+                tab.maxNum = num
             else:
                 self.tabs.setCurrentIndex(0)
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Return and self.text.get.text() != '':
-            if self.text.progressNum == 0: #유예
-                self.text.prevtime = time.time()
-                self.text.title.setText(self.text.toList[self.text.progressNum])
-                self.text.progressNum += 1
-                self.text.get.setText('')
-                self.text.title.setAlignment(Qt.AlignCenter)
+        changedInd = self.tabs.currentIndex()
+        if changedInd == 1:
+            tab = self.text
+        if changedInd == 2:
+            tab = self.news
+        if e.key() == Qt.Key_Return and tab.get.text() != '':
+            if tab.progressNum == 0: #유예
+                tab.prevtime = time.time()
+                tab.title.setText(tab.toList[tab.progressNum])
+                tab.progressNum += 1
+                tab.get.setText('')
+                tab.title.setAlignment(Qt.AlignCenter)
             else:
-                user = self.text.get.text()
-                cor = self.text.toList[self.text.progressNum-1]
-                duringtime = time.time() - self.text.prevtime
-                self.text.prevtime = time.time()
-                self.text.userList.append(user)
-                self.text.get.setText('')
-                val = self.text.pbar.value()
-                self.text.title.setText(self.text.toList[self.text.progressNum])
-                self.text.pbar.setValue(val + 1)
-                self.text.progressNum += 1
+                user = tab.get.text()
+                cor = tab.toList[tab.progressNum-1]
+                duringtime = time.time() - tab.prevtime
+                tab.prevtime = time.time()
+                tab.userList.append(user)
+                tab.get.setText('')
+                val = tab.pbar.value()
+                tab.pbar.setValue(val + 1)
+                tab.progressNum += 1
                 wrong = getWrong(user,cor)
-                self.text.wrongList.append(wrong)
-                self.text.wrong.setText("정확도 : "+str(int(wrong))+"%")
+                tab.wrongList.append(wrong)
+                tab.wrong.setText("정확도 : "+str(int(wrong))+"%")
                 at = getAt(cor,duringtime,wrong)
-                self.text.atList.append(at)
-                self.text.tasu.setText("분당 타수 : "+str(int(at)))
-                self.text.title.setAlignment(Qt.AlignCenter)
-                if self.text.progressNum == self.text.maxNum + 1:
+                tab.atList.append(at)
+                tab.tasu.setText("분당 타수 : "+str(int(at)))
+                tab.title.setAlignment(Qt.AlignCenter)
+                if tab.progressNum == tab.maxNum + 1:
+                    tab.title.setText('')
                     res = QMessageBox()
                     res.setWindowTitle("결과")
-                    res.setText("평균 분당 타수 : "+str(int(sum(self.text.atList)/len(self.text.atList)))+"\n평균 정확도 : "+str(int(sum(self.text.wrongList)/len(self.text.wrongList)))+"%")
+                    res.setText("평균 분당 타수 : "+str(int(sum(tab.atList)/len(tab.atList)))+"\n평균 정확도 : "+str(int(sum(tab.wrongList)/len(tab.wrongList)))+"%")
                     res.exec()
                     self.tabs.setCurrentIndex(0)
+                else:
+                    tab.title.setText(tab.toList[tab.progressNum])
 
     def center(self):
         qr = self.frameGeometry()
@@ -148,13 +160,12 @@ class MyApp(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-
 class MainTap(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
     def initUI(self):
-        self.title = QLabel("key(가제) 1.04a", self)
+        self.title = QLabel("key(가제) 1.05a", self)
         self.title.setAlignment(Qt.AlignCenter)
         self.tfont = self.title.font()
         self.tfont.setFamily('맑은 고딕')
@@ -172,7 +183,6 @@ class MainTap(QWidget):
         self.vbox.addWidget(self.sub)
 
         self.setLayout(self.vbox)
-
 
 class TextTap(QWidget):
     def __init__(self):
@@ -201,8 +211,11 @@ class TextTap(QWidget):
         self.vbox.addLayout(self.hbox)
         self.setLayout(self.vbox)
 
-    def initALL(self):
-        self.toList = getNews()
+    def initALL(self, type):
+        if type == 'internal':
+            self.toList = getInternal()
+        if type == 'news' :
+            self.toList = getNews()
         self.progressNum = 0
         self.maxNum = 0
         self.userList = []
@@ -214,7 +227,7 @@ class TextTap(QWidget):
         self.title.setText("아무거나 입력해 시작합니다.")
         self.title.setAlignment(Qt.AlignCenter)
 
-    toList = getNews()
+    toList = []
     progressNum = 0
     maxNum = 0
     userList = []
