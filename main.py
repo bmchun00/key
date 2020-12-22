@@ -6,6 +6,8 @@ import time
 import os, glob
 import requests
 from bs4 import BeautifulSoup
+import random
+from selenium import webdriver
 
 def getInternal(): #개선 필요
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,16 +22,53 @@ def getInternal(): #개선 필요
 
 def getNews():
     headers = {"User-Agent": "Mozilla/5.0"}
-    url = 'https://news.naver.com/main/read.nhn?mode=LSD&mid=shm&sid1=105&oid=001&aid=0011343153'
+    url = 'https://news.naver.com/main/read.nhn?mode=LSD&mid=shm&sid1=102&oid=011&aid=0003845459'
     response = requests.get(url,headers=headers)
     soup = BeautifulSoup(response.content,"html.parser")
     cont = soup.select("._article_body_contents")[0].get_text()
+    print(cont)
     cont = cont.replace("\n","")
     cont = cont.replace("\t", "")
     cont = cont.replace("\'", "")
-    cont = cont.replace("    ", "\n")
-    output = cont.split("\n")
+    cont = cont.replace("\\", "")
+    output = cont.split("다.")
+    print(output)
     return output[0:len(output)-1]
+
+def getLyrics(num):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    #top num의 곡명과 가수명 수집
+    url = 'https://www.melon.com/chart/index.htm'
+    response = requests.get(url,headers=headers)
+    soup = BeautifulSoup(response.content,"html.parser")
+    title = soup.select(".ellipsis.rank01")[num].get_text()
+    singer = soup.select(".ellipsis.rank02")[num].get_text()
+    title = title.replace("\n","")
+    singer = singer.replace("\n","")
+    singer = singer[0:len(singer)//2]
+    output = []
+    output.append(title+" - "+singer)
+    #top num의 가사 수집
+    dsn = soup.find_all("tr", {"data-song-no": True})
+    songno=[]
+    for i in dsn:
+        songno.append(i["data-song-no"])
+    tosongno=songno[num]
+    url = "https://www.melon.com/song/detail.htm?songId=" + tosongno
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+    lyr = soup.find("div",{"class":"lyric"}).get_text("\n")
+    lyr = lyr.replace("\t","")
+    lyr = lyr.replace("\r","")
+    lyr = lyr.split("\n")
+    lyr = removeValuesFromList(lyr,'')
+    for i in lyr:
+        output.append(i.strip())
+    return output
+
+def removeValuesFromList(list, val):
+    return [value for value in list if value != val]
+
 
 def getAt(cor, time, wrong):
     cnt = 0
@@ -73,12 +112,14 @@ class MyApp(QWidget):
         self.main = MainTap()
         self.text = TextTap()
         self.news = TextTap()
+        self.lyr = TextTap()
         self.stat = QWidget()
         self.changelog = QWidget()
         self.tabs = QTabWidget()
         self.tabs.addTab(self.main, 'Main')
         self.tabs.addTab(self.text, 'Internal Text')
         self.tabs.addTab(self.news, 'News')
+        self.tabs.addTab(self.lyr, 'Lyrics')
         self.tabs.addTab(self.stat, 'Stat')
         self.tabs.addTab(self.changelog, 'ChangeLog')
         tabfont = self.tabs.font()
@@ -92,7 +133,7 @@ class MyApp(QWidget):
 
         self.setLayout(self.vbox)
 
-        self.setWindowTitle('key(가제) 1.05a')
+        self.setWindowTitle('key(가제) 1.10a')
         self.setFixedSize(500,300)
         self.show()
 
@@ -104,7 +145,11 @@ class MyApp(QWidget):
         if changedInd == 2:
             tab = self.news
             tab.initALL('news')
-        if changedInd == 1 or changedInd == 2:
+        if changedInd == 3:
+            tab = self.lyr
+            tab.initALL('lyrics')
+            print(tab.toList)
+        if changedInd == 1 or changedInd == 2 or changedInd == 3:
             num, ok = QInputDialog.getInt(self, '문장 수', '수행할 문장 수를 입력해 주세요.', 1, 1, len(tab.toList)-1)
             if ok:
                 tab.pbar.setMaximum(num)
@@ -120,6 +165,8 @@ class MyApp(QWidget):
             tab = self.text
         if changedInd == 2:
             tab = self.news
+        if changedInd == 3:
+            tab = self.lyr
         if e.key() == Qt.Key_Return and tab.get.text() != '':
             if tab.progressNum == 0: #유예
                 tab.prevtime = time.time()
@@ -167,14 +214,14 @@ class MainTap(QWidget):
         super().__init__()
         self.initUI()
     def initUI(self):
-        self.title = QLabel("key(가제) 1.05a", self)
+        self.title = QLabel("key(가제) 1.10a", self)
         self.title.setAlignment(Qt.AlignCenter)
         self.tfont = self.title.font()
         self.tfont.setFamily('맑은 고딕')
         self.tfont.setPointSize(20)
         self.title.setFont(self.tfont)
 
-        self.sub = QLabel("Internal Text에서 내부 텍스트를 불러올 수 있습니다.\nNews에서 뉴스를 불러올 수 있습니다.\n다만 뉴스의 경우 문자열 길이에 대한 처리가 아직 필요합니다.",self)
+        self.sub = QLabel("Internal Text에서 내부 텍스트를 불러올 수 있습니다.\nNews에서 뉴스를 불러올 수 있습니다.\n다만 뉴스의 경우 문자열 길이에 대한 처리가 아직 필요합니다.\nLyrics에서 멜론 Top50 랜덤 곡의 가사를 불러올 수 있습니다.",self)
         self.sfont = self.sub.font()
         self.sub.setAlignment(Qt.AlignCenter)
         self.sfont.setFamily('맑은 고딕')
@@ -218,6 +265,8 @@ class TextTap(QWidget):
             self.toList = getInternal()
         if type == 'news' :
             self.toList = getNews()
+        if type == 'lyrics' :
+            self.toList = getLyrics(random.randint(1,50))
         self.progressNum = 0
         self.maxNum = 0
         self.userList = []
