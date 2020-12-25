@@ -67,6 +67,7 @@ class MyApp(QWidget):
         self.tabs.addTab(self.lyr, 'Lyrics')
         self.tabs.addTab(self.stat, 'Stat')
         self.tabs.addTab(self.changelog, 'ChangeLog')
+        self.tabs.setTabShape(0)
         tabfont = self.tabs.font()
         tabfont.setFamily('맑은 고딕')
         self.tabs.setFont(tabfont)
